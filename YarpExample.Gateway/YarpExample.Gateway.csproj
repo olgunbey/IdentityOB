@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="Database\" />
+    <Folder Include="Dtos\" />
   </ItemGroup>
 
 </Project>

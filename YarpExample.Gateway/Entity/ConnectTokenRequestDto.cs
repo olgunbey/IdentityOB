@@ -1,10 +1,9 @@
-﻿namespace YarpExample.Gateway.Dtos
+﻿namespace YarpExample.Gateway.Entity
 {
-    public class AccessTokenRequestModel
+    public class ConnectTokenRequestDto
     {
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string GrantType { get; set; }
-        public string RefreshToken { get; set; }
     }
 }
