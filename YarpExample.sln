@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YarpExample.Gateway", "YarpExample.Gateway\YarpExample.Gateway.csproj", "{6D077985-DB49-4F00-B2BA-EC2B9B510C36}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YarpExample.ProductAPI", "YarpExample.ProductAPI\YarpExample.ProductAPI.csproj", "{6CD25A24-CFB9-4AC3-B49B-87D03CF47D56}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermiCore.Auth", "PermiCore.Auth\PermiCore.Auth.csproj", "{369562A1-0112-4A0F-B5A5-98A494A781B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YarpExample.Shared", "YarpExample.Shared\YarpExample.Shared.csproj", "{D3123D88-EDE9-4803-B068-EEBA9FDC5B9C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{369562A1-0112-4A0F-B5A5-98A494A781B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{369562A1-0112-4A0F-B5A5-98A494A781B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{369562A1-0112-4A0F-B5A5-98A494A781B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3123D88-EDE9-4803-B068-EEBA9FDC5B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3123D88-EDE9-4803-B068-EEBA9FDC5B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3123D88-EDE9-4803-B068-EEBA9FDC5B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3123D88-EDE9-4803-B068-EEBA9FDC5B9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

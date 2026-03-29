@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\YarpExample.Shared\YarpExample.Shared.csproj" />
   </ItemGroup>
 
 </Project>
