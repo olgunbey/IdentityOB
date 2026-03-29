@@ -24,7 +24,7 @@ builder.Services.AddReverseProxy()
                 if (string.IsNullOrEmpty(userKey))
                 {
                     tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { LoginUrl = "http://localhost:5000" });
+                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
                 }
 
@@ -35,7 +35,7 @@ builder.Services.AddReverseProxy()
                 if (data == null || (data != null && data.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
                 {
                     tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { LoginUrl = "http://localhost:5000" });
+                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
                 }
             }

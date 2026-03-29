@@ -2,6 +2,6 @@
 {
     public class AuthRedisNotFoundResponseDto
     {
-        public string LoginUrl { get; set; }
+        public string ReturnLoginUrl { get; set; }
     }
 }
