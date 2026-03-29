@@ -8,12 +8,12 @@ namespace YarpExample.Shared
     [AttributeUsage(AttributeTargets.Method)]
     public class OBAuthAttribute(string[] Permissions, PermissionMatchType permissionMatchType) : ActionFilterAttribute
     {
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
             string userKey = context.HttpContext.Request.Headers["X-User-Key"].ToString();
 
             IRedisClientAsync redisClientAsync = new RedisManagerPool("127.0.0.1:6379").GetClientAsync().Result;
-            var authUserList = await redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer");
+            var authUserList =  redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer").Result;
 
             if (authUserList == null)
                 throw new Exception("Redis boş!");
