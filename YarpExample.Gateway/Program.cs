@@ -1,5 +1,6 @@
 ﻿using Yarp.ReverseProxy.Transforms;
-using YarpExample.Gateway;
+using YarpExample.Gateway.Dtos;
+using YarpExample.Gateway.RedisService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -8,12 +9,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient("AuthServer",httpClient =>
-{
-    httpClient.BaseAddress = new Uri("http://localhost:5000");
-});
-
-builder.Services.AddScoped<AuthHandler>();
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
@@ -21,7 +16,29 @@ builder.Services.AddReverseProxy()
     {
         context.AddRequestTransform(async tContext =>
         {
-            var proxyRequest = tContext.ProxyRequest;
+            using (ServiceProvider serviceProvider = builder.Services.BuildServiceProvider())
+            {
+                var proxyRequest = tContext.ProxyRequest;
+                proxyRequest.Headers.TryGetValues("X-User-Key", out var userKeyValues);
+                string? userKey = userKeyValues!.SingleOrDefault();
+                if (string.IsNullOrEmpty(userKey))
+                {
+                    tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { LoginUrl = "http://localhost:5000" });
+                    return;
+                }
+
+                RedisService redisService = serviceProvider.GetService<RedisService>()!;
+
+                redisService.ReadRedis(userKey, out AuthRedisResponseDto data);
+
+                if (data == null || (data != null && data.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
+                {
+                    tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { LoginUrl = "http://localhost:5000" });
+                    return;
+                }
+            }
         });
     });
 
