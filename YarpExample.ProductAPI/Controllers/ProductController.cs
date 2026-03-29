@@ -3,11 +3,12 @@ using YarpExample.Shared;
 
 namespace YarpExample.ProductAPI.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("[controller]/[action]")]
     [ApiController]
     public class ProductController : ControllerBase
     {
-        [OBAuth(new string[] { "Auth1", "Auth2" }, PermissionMatchType.Any)]
+        [OBAuth(new string[] { "Perm1", "Perm2","Perm3" }, PermissionMatchType.Any)]
+        [HttpGet]
         public IActionResult GetAllProduct()
         {
             var products = new List<string>() { "Product1", "Product2", "Product3" };

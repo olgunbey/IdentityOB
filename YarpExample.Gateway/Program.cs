@@ -9,7 +9,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddSingleton<RedisService>();
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(context =>
@@ -30,9 +30,9 @@ builder.Services.AddReverseProxy()
 
                 RedisService redisService = serviceProvider.GetService<RedisService>()!;
 
-                redisService.ReadRedis(userKey, out AuthRedisResponseDto data);
+               var hasAuthUser = await redisService.ReadRedis(userKey);
 
-                if (data == null || (data != null && data.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
+                if (hasAuthUser == null || (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
                 {
                     tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });

@@ -1,20 +1,29 @@
 ﻿
 using Microsoft.AspNetCore.Mvc.Filters;
+using ServiceStack.Redis;
 using YarpExample.Shared.Dtos;
-using YarpExample.Shared.Services;
 
 namespace YarpExample.Shared
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class OBAuthAttribute(string[] Permissions, PermissionMatchType permissionMatchType) : ActionFilterAttribute
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            RedisService redisService = (RedisService)context.HttpContext.RequestServices.GetService(typeof(RedisService))!;
-
             string userKey = context.HttpContext.Request.Headers["X-User-Key"].ToString();
 
-            redisService.ReadRedis(userKey, out AuthRedisResponseDto data);
+            IRedisClientAsync redisClientAsync = new RedisManagerPool("127.0.0.1:6379").GetClientAsync().Result;
+            var authUserList = await redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer");
+
+            if (authUserList == null)
+                throw new Exception("Redis boş!");
+
+            var data = authUserList.SingleOrDefault(x => x.UserKey == userKey);
+            if (data == null)
+            {
+                context.HttpContext.Response.StatusCode = 401;
+                return;
+            }
             if (permissionMatchType.Equals(PermissionMatchType.All))
             {
 
