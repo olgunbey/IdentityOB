@@ -18,24 +18,24 @@ builder.Services.AddReverseProxy()
         {
             using (ServiceProvider serviceProvider = builder.Services.BuildServiceProvider())
             {
-                var proxyRequest = tContext.ProxyRequest;
-                proxyRequest.Headers.TryGetValues("X-User-Key", out var userKeyValues);
-                string? userKey = userKeyValues!.SingleOrDefault();
-                if (string.IsNullOrEmpty(userKey))
+                var httpContext = tContext.HttpContext;
+                var headerDictionary = httpContext.Request.Headers;
+                string? userKeyValue = tContext.HttpContext.Request.Cookies["X-User-Key"];
+                if (string.IsNullOrEmpty(userKeyValue))
                 {
-                    tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
+                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await httpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
                 }
 
                 RedisService redisService = serviceProvider.GetService<RedisService>()!;
 
-               var hasAuthUser = await redisService.ReadRedis(userKey);
+                var hasAuthUser = await redisService.ReadRedis(userKeyValue);
 
                 if (hasAuthUser == null || (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
                 {
-                    tContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await tContext.HttpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
+                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await httpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
                 }
             }
