@@ -1,15 +1,17 @@
-﻿using Yarp.ReverseProxy.Transforms;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
+using Yarp.ReverseProxy.Transforms;
+using YarpExample.Gateway.Database;
 using YarpExample.Gateway.Dtos;
 using YarpExample.Gateway.RedisService;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<RedisService>();
+builder.Services.AddDbContext<GatewayDbContext>(y => y.UseNpgsql("Host=localhost;Port=5432;Username=olgunbey;Password=sahinbey;Database=GatewayDbContext"));
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(context =>
@@ -19,24 +21,25 @@ builder.Services.AddReverseProxy()
             using (ServiceProvider serviceProvider = builder.Services.BuildServiceProvider())
             {
                 var httpContext = tContext.HttpContext;
-                var headerDictionary = httpContext.Request.Headers;
-                string? userKeyValue = tContext.HttpContext.Request.Cookies["X-User-Key"];
-                if (string.IsNullOrEmpty(userKeyValue))
+                httpContext.Request.Headers.TryGetValue("X-User-Key", out StringValues val);
+                string value = val.ToString();
+                if (string.IsNullOrWhiteSpace(val))
                 {
                     httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await httpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
                 }
 
                 RedisService redisService = serviceProvider.GetService<RedisService>()!;
+                var hasAuthUser = await redisService.ReadRedis(value);
 
-                var hasAuthUser = await redisService.ReadRedis(userKeyValue);
-
-                if (hasAuthUser == null || (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow)) //Bu kullanıcı rediste yok veya rediste var ama süresi dolmuş
+                if (hasAuthUser == null) //Bu kullanıcı rediste yok
                 {
                     httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await httpContext.Response.WriteAsJsonAsync(new AuthRedisNotFoundResponseDto() { ReturnLoginUrl = "http://localhost:5000" });
                     return;
+                }
+                if (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow) //Bu kullanıcı rediste var ama süresi dolmuş
+                {
+                    await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
                 }
             }
         });
@@ -44,7 +47,6 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

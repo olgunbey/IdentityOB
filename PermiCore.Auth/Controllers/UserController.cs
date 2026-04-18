@@ -25,11 +25,6 @@ namespace PermiCore.Auth.Controllers
                     if (authRedisUserDto != null)
                     {
                         userKey.UserKey = authRedisUserDto.UserKey;
-                        HttpContext.Response.Cookies.Append("X-User-Key", userKey.UserKey, new CookieOptions()
-                        {
-                            HttpOnly = true,
-                            Expires = DateTime.Now.AddDays(1)
-                        });
                         return Ok(userKey);
                     } 
                 }
@@ -47,12 +42,6 @@ namespace PermiCore.Auth.Controllers
                 }
                 
                 await redisClientManagerAsync.SetAsync<List<AuthRedisUserDto>>("AuthServer", authUserList);
-                HttpContext.Response.Cookies.Append("X-User-Key", userKey.UserKey, new CookieOptions()
-                {
-                    HttpOnly = true,
-                    Expires = DateTime.Now.AddDays(1)
-                });
-
                 return Ok(userKey);
             }
             return BadRequest();

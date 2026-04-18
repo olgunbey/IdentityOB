@@ -7,7 +7,7 @@ namespace YarpExample.ProductAPI.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        [OBAuth(new string[] { "Perm1", "Perm2","Perm3" }, PermissionMatchType.Any)]
+        [OBAuth(new[] { "Perm1", "Perm2","Perm3" }, PermissionMatchType.Any)]
         [HttpGet]
         public IActionResult GetAllProduct()
         {
