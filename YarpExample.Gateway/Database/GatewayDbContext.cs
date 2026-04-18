@@ -9,7 +9,7 @@ namespace YarpExample.Gateway.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Permissions>().Property(y => y.PermissionId).IsRequired(false);
+            modelBuilder.Entity<Permissions>().Property(y => y.PermissionId).IsRequired(false).HasDefaultValue(0);
 
             modelBuilder.Entity<ServicesPermissions>()
                 .HasOne(sp => sp.Service)
