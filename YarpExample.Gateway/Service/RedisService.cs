@@ -12,15 +12,15 @@ namespace YarpExample.Gateway.RedisService
         }
         public async Task<AuthRedisResponseDto?> ReadRedis(string key)
         {
-            var data =await redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer");
+            var data = await redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer");
 
-           return data.SingleOrDefault(y => y.UserKey == key);
+            return data.SingleOrDefault(y => y.UserKey == key);
         }
         public async Task UpdateUserRedis(string key)
         {
             var data = await redisClientAsync.GetAsync<List<AuthRedisResponseDto>>("AuthServer");
 
-            if(data.Count() == 0)
+            if (data.Count() == 0)
                 return;
 
             data.First(y => y.UserKey == key).LifeTime = DateTime.UtcNow.AddMinutes(30);

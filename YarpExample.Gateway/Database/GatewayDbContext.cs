@@ -6,6 +6,8 @@ namespace YarpExample.Gateway.Database
     public class GatewayDbContext(DbContextOptions<GatewayDbContext> dbContextOptions) : DbContext(dbContextOptions)
     {
         public DbSet<Services> Services { get; set; }
+        public DbSet<ServicesPermissions> ServicesPermissions { get; set; }
+        public DbSet<Permissions> Permissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

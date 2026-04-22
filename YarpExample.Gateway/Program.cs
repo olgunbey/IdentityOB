@@ -2,8 +2,8 @@
 using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Transforms;
 using YarpExample.Gateway.Database;
-using YarpExample.Gateway.Dtos;
 using YarpExample.Gateway.RedisService;
+using YarpExample.Gateway.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<RedisService>();
+builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddDbContext<GatewayDbContext>(y => y.UseNpgsql("Host=localhost;Port=5432;Username=olgunbey;Password=sahinbey;Database=GatewayDbContext"));
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
@@ -41,7 +42,33 @@ builder.Services.AddReverseProxy()
                 {
                     await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
                 }
+                GatewayDbContext gatewayDbContext = serviceProvider.GetService<GatewayDbContext>()!;
+                DatabaseService databaseService = serviceProvider.GetService<DatabaseService>()!;
+
+                var path = tContext.HttpContext.Request.Path;
+
+
+                try
+                {
+                    var servicePermissions =await gatewayDbContext.ServicesPermissions.
+                             AsNoTrackingWithIdentityResolution().
+                             Include(y => y.Service).
+                             Include(y => y.Permission).
+                             Where(x => x.Service.RequestPath == path.ToString().ToLower()).ToListAsync();
+                    if (await databaseService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
+                    {
+                        httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return;
+                    }
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+              
             }
+
         });
     });
 
