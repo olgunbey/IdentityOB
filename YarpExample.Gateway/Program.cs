@@ -45,16 +45,16 @@ builder.Services.AddReverseProxy()
                 GatewayDbContext gatewayDbContext = serviceProvider.GetService<GatewayDbContext>()!;
                 DatabaseService databaseService = serviceProvider.GetService<DatabaseService>()!;
 
-                var path = tContext.HttpContext.Request.Path;
+                var path = tContext.HttpContext.Request.Path.ToString().ToLower();
 
 
                 try
                 {
-                    var servicePermissions =await gatewayDbContext.ServicesPermissions.
+                    var servicePermissions =  gatewayDbContext.ServicesPermissions.
                              AsNoTrackingWithIdentityResolution().
                              Include(y => y.Service).
                              Include(y => y.Permission).
-                             Where(x => x.Service.RequestPath == path.ToString().ToLower()).ToListAsync();
+                             Where(x => x.Service.RequestPath == path).AsEnumerable();
                     if (!await databaseService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
                     {
                         httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -66,7 +66,7 @@ builder.Services.AddReverseProxy()
 
                     throw;
                 }
-              
+
             }
 
         });
