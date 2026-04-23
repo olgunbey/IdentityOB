@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using YarpExample.Shared;
 
 namespace YarpExample.ProductAPI.Controllers
 {
