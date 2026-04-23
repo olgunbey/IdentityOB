@@ -55,7 +55,7 @@ builder.Services.AddReverseProxy()
                              Include(y => y.Service).
                              Include(y => y.Permission).
                              Where(x => x.Service.RequestPath == path.ToString().ToLower()).ToListAsync();
-                    if (await databaseService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
+                    if (!await databaseService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
                     {
                         httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                         return;

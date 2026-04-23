@@ -20,11 +20,6 @@ namespace YarpExample.Gateway.Service
                 return servicePermissions.IntersectBy(userPermissionsName, sp => sp.Permission.Permission).Any();
             }
 
-            var serviceChildPerm = servicePermissions.Where(y => y.PermissionId != 0).ToList();
-
-            if (!serviceChildPerm.Any()) 
-                return true;
-
             var userPermissionList = gatewayDbContext.Permissions.AsEnumerable().IntersectBy(userPermissionsName, x => x.Permission).ToList();
 
             if (!userPermissionList.Any())
@@ -36,20 +31,13 @@ namespace YarpExample.Gateway.Service
 
                 if (childUserPerm.Any())
                 {
-                    if (serviceChildPerm.IntersectBy(childUserPerm.Select(y => y.PermissionId), x => x.PermissionId).Any())
-                        return true;
-
-                    if (await SearchPermission(serviceChildPerm, childUserPerm.Select(y => y.Permission).ToList()))
+                    if (servicePermissions.IntersectBy(childUserPerm.Select(y => y.Id), x => x.PermissionId).Any())
                         return true;
                 }
-                else
-                {
-                    return servicePermissions.SingleOrDefault(x => x.PermissionId == permission.Id) != null;
-                }
 
-
+                if (await SearchPermission(servicePermissions, childUserPerm.Select(y => y.Permission).ToList()))
+                    return true;
             }
-
             return false;
         }
     }

@@ -13,7 +13,7 @@ namespace PermiCore.Auth.Controllers
         public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
         {
             int userID = 1; //veritabanından kullanıcı id'si çekilecek
-            List<string> permissions = new List<string>() { "ChildPerm1", "Child2Perm1" };
+            List<string> permissions = new List<string>() { "RootPerm1", "ChildPerm2" };
             var userKey = new LoginResponseDto();
             if (loginRequestDto != null) //username password kontrolü yapıldıktan sonra
             {
