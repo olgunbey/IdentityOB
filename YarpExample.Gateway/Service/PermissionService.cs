@@ -9,8 +9,10 @@ namespace YarpExample.Gateway.Service
     {
         public async Task<bool> SearchPermission(IEnumerable<ServicesPermissions> servicePermissions, List<string> userPermissionsName)
         {
-            if (servicePermissions == null || !servicePermissions.Any() ||
-                userPermissionsName == null || !userPermissionsName.Any())
+            if (servicePermissions == null || !servicePermissions.Any())
+                return true;
+
+            if(userPermissionsName == null || !userPermissionsName.Any())
                 return false;
 
             var childUserPerm = gatewayDbContext.Permissions
