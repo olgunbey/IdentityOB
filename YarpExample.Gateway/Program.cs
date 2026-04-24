@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
-using Yarp.ReverseProxy.Transforms;
 using YarpExample.Gateway.Database;
 using YarpExample.Gateway.RedisService;
+using YarpExample.Gateway.RequestTransforms;
 using YarpExample.Gateway.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,59 +16,11 @@ builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(context =>
     {
-        context.AddRequestTransform(async tContext =>
-        {
-            using (ServiceProvider serviceProvider = builder.Services.BuildServiceProvider())
-            {
-                var httpContext = tContext.HttpContext;
-                httpContext.Request.Headers.TryGetValue("X-User-Key", out StringValues val);
-                string value = val.ToString();
-                if (string.IsNullOrWhiteSpace(val))
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return;
-                }
-
-                RedisService redisService = serviceProvider.GetService<RedisService>()!;
-                var hasAuthUser = await redisService.ReadRedis(value);
-
-                if (hasAuthUser == null) //Bu kullanıcı rediste yok
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return;
-                }
-                if (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow) //Bu kullanıcı rediste var ama süresi dolmuş
-                {
-                    await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
-                }
-                GatewayDbContext gatewayDbContext = serviceProvider.GetService<GatewayDbContext>()!;
-                PermissionService databaseService = serviceProvider.GetService<PermissionService>()!;
-
-                var path = tContext.HttpContext.Request.Path.ToString().ToLower();
-
-
-                try
-                {
-                    var servicePermissions =  gatewayDbContext.ServicesPermissions.
-                             AsNoTrackingWithIdentityResolution().
-                             Include(y => y.Service).
-                             Include(y => y.Permission).
-                             Where(x => x.Service.RequestPath == path).AsEnumerable();
-                    if (!await databaseService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
-                    {
-                        httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        return;
-                    }
-                }
-                catch (Exception)
-                {
-
-                    throw;
-                }
-
-            }
-
-        });
+        var scope = context.Services.CreateScope();
+        var redisService = scope.ServiceProvider.GetRequiredService<RedisService>();
+        var gatewayDbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
+        var permissionService = scope.ServiceProvider.GetRequiredService<PermissionService>();
+        context.RequestTransforms.Add(new AuthorizationRequestTransform(redisService, gatewayDbContext, permissionService));
     });
 
 var app = builder.Build();
