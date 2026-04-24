@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<RedisService>();
-builder.Services.AddScoped<DatabaseService>();
+builder.Services.AddScoped<PermissionService>();
 builder.Services.AddDbContext<GatewayDbContext>(y => y.UseNpgsql("Host=localhost;Port=5432;Username=olgunbey;Password=sahinbey;Database=GatewayDbContext"));
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
@@ -43,7 +43,7 @@ builder.Services.AddReverseProxy()
                     await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
                 }
                 GatewayDbContext gatewayDbContext = serviceProvider.GetService<GatewayDbContext>()!;
-                DatabaseService databaseService = serviceProvider.GetService<DatabaseService>()!;
+                PermissionService databaseService = serviceProvider.GetService<PermissionService>()!;
 
                 var path = tContext.HttpContext.Request.Path.ToString().ToLower();
 

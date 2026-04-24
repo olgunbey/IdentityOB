@@ -5,16 +5,13 @@ using YarpExample.Gateway.Entity;
 
 namespace YarpExample.Gateway.Service
 {
-    public class DatabaseService(GatewayDbContext gatewayDbContext)
+    public class PermissionService(GatewayDbContext gatewayDbContext)
     {
         public async Task<bool> SearchPermission(IEnumerable<ServicesPermissions> servicePermissions, List<string> userPermissionsName)
         {
             if (servicePermissions == null || !servicePermissions.Any() ||
                 userPermissionsName == null || !userPermissionsName.Any())
                 return false;
-
-            if (await servicePermissions.AllAsync(async servicePermission => servicePermission.PermissionId == 0)) //Servisin bütün permissionları parent
-                return servicePermissions.IntersectBy(userPermissionsName, sp => sp.Permission.Permission).Any();
 
             var childUserPerm = gatewayDbContext.Permissions
                 .Where(y => y.PermissionId.HasValue &&
