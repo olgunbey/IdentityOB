@@ -8,6 +8,7 @@ namespace PermiCore.Auth.Database
         public DbSet<Permissions> Permissions { get; set; }
         public DbSet<Users> Users { get; set; }
         public DbSet<UserPermissions> UserPermissions { get; set; }
+        public DbSet<LoginUser> LoginUser { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Permissions>().Property(y => y.PermissionId).IsRequired(false);

@@ -1,18 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Hybrid;
 using YarpExample.Gateway.Dtos;
+using YarpExample.Gateway.Service;
 
 namespace YarpExample.Gateway.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class ServiceController() : ControllerBase
+    public class ServiceController(GatewayService gatewayService) : ControllerBase
     {
         [HttpPost]
         public async Task<IActionResult> AddServicePermission([FromBody] AddServicePermissionRequestDto addServicePermissionRequestDto)
         {
-
-            return Ok();
+            await gatewayService.AddServicePermissionOutbox(addServicePermissionRequestDto);
+            return NoContent();
         }
     }
 }

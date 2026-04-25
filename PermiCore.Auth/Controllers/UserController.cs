@@ -13,33 +13,36 @@ namespace PermiCore.Auth.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
         {
-            var userKey = new LoginResponseDto();
-
             var getUser = await authService.GetUserById(loginRequestDto.Username, loginRequestDto.Password);
 
             if (getUser == null)
-                return BadRequest();
+                return Unauthorized();
+
 
             AuthRedisUserDto authRedisUserDto = new AuthRedisUserDto();
-            authRedisUserDto.UserId = getUser.Id;
             authRedisUserDto.Permissions = getUser.UserPermissions.Select(y => y.Permission).SelectMany(x => x.UserPermissions).Select(x => x.Permission.Permission).ToList();
 
-
-            var cacheAuthUser = await hybridCache.GetOrCreateAsync(
+            await hybridCache.SetAsync(
                  key: $"AuthServer:{getUser.Id}",
-                 factory: async (ct) => authRedisUserDto,
-                 options: new HybridCacheEntryOptions
+                 value: authRedisUserDto,
+                 options: new HybridCacheEntryOptions()
                  {
-                     Expiration = TimeSpan.FromDays(10)
-                 }
-                 );
+                     Expiration = TimeSpan.FromDays(1),
+                     LocalCacheExpiration = TimeSpan.FromMinutes(5)
+                 });
 
-            return Ok(cacheAuthUser.UserKey);
+            return Ok(getUser.Id);
         }
         [HttpPost]
         public async Task<IActionResult> SignUp(SignUpRequestDto signUpRequestDto)
         {
             return Ok();
+        }
+        [HttpGet]
+        public async Task<IActionResult> LogOut([FromQuery] int userId)
+        {
+            await hybridCache.RemoveAsync(key: $"AuthServer:{userId}");
+            return NoContent();
         }
     }
 }

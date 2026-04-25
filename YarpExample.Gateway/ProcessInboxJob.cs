@@ -39,6 +39,7 @@ namespace YarpExample.Gateway
                 await transaction.RollbackAsync();
                 throw;
             }
+            await transaction.DisposeAsync();
 
             var inboxItems = gatewayDbContext.Inbox
                 .Where(x => x.ProcessedDateTime == null
@@ -65,6 +66,7 @@ namespace YarpExample.Gateway
                 await transaction2.RollbackAsync();
                 throw;
             }
+            await transaction2.DisposeAsync();
 
             var rawData = await gatewayDbContext.ServicesPermissions
                 .AsNoTracking()

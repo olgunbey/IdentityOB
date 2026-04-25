@@ -13,5 +13,9 @@ namespace PermiCore.Auth.Service
                    .ThenInclude(y => y.Permission)
                    .FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
         }
+        public async Task<Users?> LoginAsync(string email, string password)
+        {
+            return await authDbContext.Users.FirstOrDefaultAsync(y => y.Email == email && y.Password == password);
+        }
     }
 }

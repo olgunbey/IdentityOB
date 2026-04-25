@@ -3,8 +3,6 @@
     public class AuthRedisResponseDto
     {
         public int UserId { get; set; }
-        public string UserKey { get; set; }
         public List<string> Permissions { get; set; }
-        public DateTime LifeTime { get; set; }
     }
 }

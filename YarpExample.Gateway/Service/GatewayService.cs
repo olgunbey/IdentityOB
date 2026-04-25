@@ -6,7 +6,7 @@ using YarpExample.Gateway.Entity;
 
 namespace YarpExample.Gateway.Service
 {
-    public class PermissionService(GatewayDbContext gatewayDbContext)
+    public class GatewayService(GatewayDbContext gatewayDbContext)
     {
         public async Task<bool> SearchPermission(IEnumerable<ServicesPermissions> servicePermissions, List<string> userPermissionsName)
         {

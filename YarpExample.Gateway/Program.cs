@@ -14,7 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddHangfireServer();
-builder.Services.AddScoped<PermissionService>();
+builder.Services.AddScoped<GatewayService>();
 builder.Services.AddStackExchangeRedisCache(action =>
 {
     action.Configuration = "127.0.0.1:6379";
@@ -27,7 +27,9 @@ builder.Services.AddReverseProxy()
     {
         var scope = context.Services.CreateScope();
         var hybridCache = scope.ServiceProvider.GetRequiredService<HybridCache>();
-        context.RequestTransforms.Add(new AuthorizationRequestTransform(hybridCache));
+        var gatewayDbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
+        var gatewayService = scope.ServiceProvider.GetRequiredService<GatewayService>();
+        context.RequestTransforms.Add(new AuthorizationRequestTransform(hybridCache, gatewayDbContext, gatewayService));
     });
 
 var app = builder.Build();
