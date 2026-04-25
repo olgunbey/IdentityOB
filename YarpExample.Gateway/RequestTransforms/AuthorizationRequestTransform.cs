@@ -1,14 +1,10 @@
-﻿
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Transforms;
-using YarpExample.Gateway.Database;
-using YarpExample.Gateway.Service;
 
 namespace YarpExample.Gateway.RequestTransforms
 {
-    public class AuthorizationRequestTransform(RedisService.RedisService redisService, GatewayDbContext gatewayDbContext, PermissionService permissionService) : RequestTransform
+    public class AuthorizationRequestTransform(HybridCache redisService) : RequestTransform
     {
         public override async ValueTask ApplyAsync(RequestTransformContext context)
         {
@@ -21,38 +17,39 @@ namespace YarpExample.Gateway.RequestTransforms
                 return;
             }
 
-            var hasAuthUser = await redisService.ReadRedis(value);
 
-            if (hasAuthUser == null) //Bu kullanıcı rediste yok
-            {
-                httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return;
-            }
-            if (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow) //Bu kullanıcı rediste var ama süresi dolmuş
-            {
-                await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
-            }
-            var path = httpContext.Request.Path.ToString().ToLower();
+            //var getAllAuthUser = await redisService.ReadRedis<AuthRedisResponseDto>("AuthServer");
 
-            try
-            {
-                var servicePermissions = gatewayDbContext.ServicesPermissions.
-                     AsNoTrackingWithIdentityResolution().
-                     Include(y => y.Service).
-                     Include(y => y.Permission).
-                     Where(x => x.Service.RequestPath == path).AsEnumerable();
-                if (!await permissionService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
-                {
-                    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return;
-                }
-            }
-            catch (Exception)
-            {
+            //if (getAllAuthUser == null || !getAllAuthUser.Any())
+            //{
+            //    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //    return;
+            //}
 
-                throw;
-            }
-            
+            //var hasAuthUser = getAllAuthUser.FirstOrDefault(x => x.UserKey == value);
+
+            //if (hasAuthUser == null) //Bu kullanıcı rediste yok
+            //{
+            //    httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //    return;
+            //}
+            //if (hasAuthUser != null && hasAuthUser.LifeTime < DateTime.UtcNow) //Bu kullanıcı rediste var ama süresi dolmuş
+            //{
+            //    await redisService.UpdateUserRedis(value); //Burada kullanıcının süresini güncelliyoruz
+            //}
+            //var path = httpContext.Request.Path.ToString().ToLower();
+
+
+            //var servicePermissions = gatewayDbContext.ServicesPermissions.
+            //     AsNoTrackingWithIdentityResolution().
+            //     Include(y => y.Service).
+            //     Include(y => y.Permission).
+            //     Where(x => x.Service.RequestPath == path).AsEnumerable();
+            //if (!await permissionService.SearchPermission(servicePermissions, hasAuthUser!.Permissions))
+            //{
+            //    httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+            //    return;
+            //}
 
         }
     }

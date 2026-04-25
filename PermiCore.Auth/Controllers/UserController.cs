@@ -1,50 +1,41 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Hybrid;
 using PermiCore.Auth.Dtos.Request;
 using PermiCore.Auth.Dtos.Response;
-using ServiceStack.Redis;
+using PermiCore.Auth.Service;
 
 namespace PermiCore.Auth.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class UserController(IRedisClientAsync redisClientManagerAsync) : ControllerBase
+    public class UserController(HybridCache hybridCache, AuthService authService) : ControllerBase
     {
         [HttpPost]
         public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
         {
-            int userID = 1; //veritabanından kullanıcı id'si çekilecek
-            List<string> permissions = new List<string>() { "RootPerm1", "ChildPerm2" };
             var userKey = new LoginResponseDto();
-            if (loginRequestDto != null) //username password kontrolü yapıldıktan sonra
-            {
-                var authUserList = await redisClientManagerAsync.GetAsync<List<AuthRedisUserDto>>("AuthServer");
-                if (authUserList != null)
-                {
-                    AuthRedisUserDto? authRedisUserDto = authUserList.SingleOrDefault(y => y.UserId == userID);
 
-                    if (authRedisUserDto != null)
-                    {
-                        userKey.UserKey = authRedisUserDto.UserKey;
-                        return Ok(userKey);
-                    } 
-                }
-                else
-                {
-                    authUserList = new List<AuthRedisUserDto>();
-                    userKey.UserKey = Guid.NewGuid().ToString();
-                    authUserList.Add(new AuthRedisUserDto()
-                    {
-                        UserId = userID,
-                        UserKey = userKey.UserKey,
-                        Permissions = permissions,
-                        LifeTime = DateTime.Now.AddDays(10)
-                    });
-                }
-                
-                await redisClientManagerAsync.SetAsync<List<AuthRedisUserDto>>("AuthServer", authUserList);
-                return Ok(userKey);
-            }
-            return BadRequest();
+            var getUser = await authService.GetUserById(loginRequestDto.Username, loginRequestDto.Password);
+
+            if (getUser == null)
+                return BadRequest();
+
+            AuthRedisUserDto authRedisUserDto = new AuthRedisUserDto();
+            authRedisUserDto.UserId = getUser.Id;
+            authRedisUserDto.UserKey = Guid.NewGuid().ToString();
+            authRedisUserDto.Permissions = getUser.UserPermissions.Select(y => y.Permission).SelectMany(x => x.UserPermissions).Select(x => x.Permission.Permission).ToList();
+
+
+            var cacheAuthUser = await hybridCache.GetOrCreateAsync(
+                 key: $"AuthServer:{getUser.Id}",
+                 factory: async (ct) => authRedisUserDto,
+                 options: new HybridCacheEntryOptions
+                 {
+                     Expiration=TimeSpan.FromDays(10)
+                 }
+                 );
+
+            return Ok(cacheAuthUser.UserKey);
         }
     }
 }

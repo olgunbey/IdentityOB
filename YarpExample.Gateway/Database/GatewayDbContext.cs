@@ -9,6 +9,9 @@ namespace YarpExample.Gateway.Database
         public DbSet<ServicesPermissions> ServicesPermissions { get; set; }
         public DbSet<Permissions> Permissions { get; set; }
 
+        public DbSet<Outbox> Outbox { get; set; }
+        public DbSet<Inbox> Inbox { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Permissions>().Property(y => y.PermissionId).IsRequired(false).HasDefaultValue(0);

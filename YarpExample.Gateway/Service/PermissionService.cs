@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ServiceStack;
+using System.Text.Json;
 using YarpExample.Gateway.Database;
+using YarpExample.Gateway.Dtos;
 using YarpExample.Gateway.Entity;
 
 namespace YarpExample.Gateway.Service
@@ -12,7 +13,7 @@ namespace YarpExample.Gateway.Service
             if (servicePermissions == null || !servicePermissions.Any())
                 return true;
 
-            if(userPermissionsName == null || !userPermissionsName.Any())
+            if (userPermissionsName == null || !userPermissionsName.Any())
                 return false;
 
             var childUserPerm = gatewayDbContext.Permissions
@@ -32,6 +33,22 @@ namespace YarpExample.Gateway.Service
                 return true;
 
             return false;
+        }
+
+        public async Task AddServicePermissionOutbox(AddServicePermissionRequestDto addServicePermissionRequestDto)
+        {
+
+            var outboxes = addServicePermissionRequestDto.PermissionsId.Select(y => new Outbox()
+            {
+                WriteDateTime = DateTime.Now,
+                IdempotencyId = Guid.NewGuid(),
+                InboxOutboxType = new ServicesPermissions().GetType().Name,
+                Payload = JsonSerializer.Serialize(new ServicesPermissions() { PermissionId = y, ServiceId = addServicePermissionRequestDto.RequestPathId })
+            });
+
+            gatewayDbContext.Outbox.AddRange(outboxes);
+
+            await gatewayDbContext.SaveChangesAsync();
         }
     }
 }

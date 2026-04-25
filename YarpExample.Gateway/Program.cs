@@ -1,6 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire;
+using Hangfire.MemoryStorage;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using YarpExample.Gateway;
 using YarpExample.Gateway.Database;
-using YarpExample.Gateway.RedisService;
 using YarpExample.Gateway.RequestTransforms;
 using YarpExample.Gateway.Service;
 
@@ -9,22 +12,37 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<RedisService>();
+builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddHangfireServer();
 builder.Services.AddScoped<PermissionService>();
+builder.Services.AddStackExchangeRedisCache(action =>
+{
+    action.Configuration = "127.0.0.1:6379";
+});
+builder.Services.AddHybridCache();
 builder.Services.AddDbContext<GatewayDbContext>(y => y.UseNpgsql("Host=localhost;Port=5432;Username=olgunbey;Password=sahinbey;Database=GatewayDbContext"));
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
     .AddTransforms(context =>
     {
         var scope = context.Services.CreateScope();
-        var redisService = scope.ServiceProvider.GetRequiredService<RedisService>();
-        var gatewayDbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
-        var permissionService = scope.ServiceProvider.GetRequiredService<PermissionService>();
-        context.RequestTransforms.Add(new AuthorizationRequestTransform(redisService, gatewayDbContext, permissionService));
+        var hybridCache = scope.ServiceProvider.GetRequiredService<HybridCache>();
+        context.RequestTransforms.Add(new AuthorizationRequestTransform(hybridCache));
     });
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.AddOrUpdate<ProcessInboxJob>(
+        "myrecurringJob",
+        y => y.Execute(),
+        "* * * * *"
+    );
+
+}
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -33,6 +51,7 @@ if (app.Environment.IsDevelopment())
 app.UseForwardedHeaders();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseHangfireDashboard();
 app.MapReverseProxy();
 app.MapControllers();
 app.Run();

@@ -1,19 +1,25 @@
-using ServiceStack.Redis;
+
+using Microsoft.EntityFrameworkCore;
+using PermiCore.Auth.Database;
+using PermiCore.Auth.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddDbContext<AuthDbContext>(y => y.UseNpgsql("Host=localhost;Port=5432;Username=olgunbey;Password=sahinbey;Database=AuthDbContext"));
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "127.0.0.1:6379";
+});
+builder.Services.AddHybridCache();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<IRedisClientAsync>(c => 
-new RedisManagerPool("127.0.0.1:6379").GetClientAsync().Result);
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
