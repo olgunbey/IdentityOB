@@ -28,7 +28,7 @@ namespace PermiCore.Auth.Controllers
                  options: new HybridCacheEntryOptions()
                  {
                      Expiration = TimeSpan.FromDays(1),
-                     LocalCacheExpiration = TimeSpan.FromMinutes(5)
+                     LocalCacheExpiration = TimeSpan.FromMinutes(10)
                  });
 
             return Ok(getUser.Id);
