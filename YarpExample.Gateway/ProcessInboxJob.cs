@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using System.Text.Json;
 using YarpExample.Gateway.Database;
+using YarpExample.Gateway.Dtos;
 using YarpExample.Gateway.Entity;
 namespace YarpExample.Gateway
 {
@@ -81,7 +82,12 @@ namespace YarpExample.Gateway
 
             var tasks = rawData.Select(x => hybridCache.SetAsync(
                 key: $"service-permissions:{x.Key}",
-                value: x.Permissions).AsTask());
+                value: x.Permissions,
+                options: new HybridCacheEntryOptions()
+                {
+                    LocalCacheExpiration = TimeSpan.FromDays(100),
+                    Expiration = TimeSpan.FromDays(100)
+                }).AsTask());
 
             await Task.WhenAll(tasks);
 

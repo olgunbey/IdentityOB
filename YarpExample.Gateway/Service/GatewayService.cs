@@ -8,9 +8,9 @@ namespace YarpExample.Gateway.Service
 {
     public class GatewayService(GatewayDbContext gatewayDbContext)
     {
-        public async Task<bool> SearchPermission(IEnumerable<ServicesPermissions> servicePermissions, List<string> userPermissionsName)
+        public async Task<bool> SearchPermission(ServicePermissionRedisCacheDto servicePermissions, List<string> userPermissionsName)
         {
-            if (servicePermissions == null || !servicePermissions.Any())
+            if (servicePermissions == null || !servicePermissions.Permissions.Any())
                 return true;
 
             if (userPermissionsName == null || !userPermissionsName.Any())
@@ -24,9 +24,9 @@ namespace YarpExample.Gateway.Service
                                 .Contains(y.PermissionId.Value));
 
             if (!childUserPerm.Any())
-                return servicePermissions.IntersectBy(userPermissionsName, sp => sp.Permission.Permission).Any();
+                return servicePermissions.Permissions.IntersectBy(userPermissionsName, sp => sp).Any();
 
-            if (servicePermissions.IntersectBy(childUserPerm.Select(y => y.Id), x => x.PermissionId).Any())
+            if (servicePermissions.Permissions.IntersectBy(userPermissionsName, sp => sp).Any())
                 return true;
 
             if (await SearchPermission(servicePermissions, childUserPerm.Select(y => y.Permission).ToList()))
@@ -40,10 +40,13 @@ namespace YarpExample.Gateway.Service
 
             var outboxes = addServicePermissionRequestDto.PermissionsId.Select(y => new Outbox()
             {
-                WriteDateTime = DateTime.Now,
+                WriteDateTime = DateTime.UtcNow,
                 IdempotencyId = Guid.NewGuid(),
                 InboxOutboxType = new ServicesPermissions().GetType().Name,
-                Payload = JsonSerializer.Serialize(new ServicesPermissions() { PermissionId = y, ServiceId = addServicePermissionRequestDto.RequestPathId })
+                Payload = JsonSerializer.Serialize(new ServicesPermissions() { PermissionId = y, ServiceId = addServicePermissionRequestDto.RequestPathId }, new JsonSerializerOptions()
+                {
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                })
             });
 
             gatewayDbContext.Outbox.AddRange(outboxes);

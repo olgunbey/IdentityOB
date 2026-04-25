@@ -24,19 +24,32 @@ namespace YarpExample.Gateway.RequestTransforms
                 key: $"AuthServer:{userId}",
                 factory: async (ct) => null);
 
-            if (getAllAuthUser == null) //Ya kullanıcı ok ya da lifetime sürsei doldu. 
+            if (getAllAuthUser == null) //Ya kullanıcı ok ya da lifetime süresi doldu. 
             {
                 httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
             }
             var path = httpContext.Request.Path.ToString().ToLower();
 
+            var requestService = await gatewayDbContext.Services.SingleAsync(x => x.RequestPath == path);
 
-            var servicePermissions = gatewayDbContext.ServicesPermissions.
-                 AsNoTrackingWithIdentityResolution().
-                 Include(y => y.Service).
-                 Include(y => y.Permission).
-                 Where(x => x.Service.RequestPath == path).AsEnumerable();
+            var servicePermissions = await hybridCache.GetOrCreateAsync<ServicePermissionRedisCacheDto>(
+                  key: $"service-permissions:{requestService.Id}",
+                  factory: (ct) =>
+                  {
+                      var servicePermissions = gatewayDbContext.ServicesPermissions.
+                          AsNoTrackingWithIdentityResolution().
+                          Include(y => y.Service).
+                          Include(y => y.Permission).
+                          Where(x => x.Service.RequestPath == path).AsEnumerable();
+                      var servicePermissionRedisCacheDto = new ServicePermissionRedisCacheDto()
+                      {
+                          Permissions = servicePermissions.Select(y => y.Permission.Permission).ToList(),
+                      };
+                      return ValueTask.FromResult(servicePermissionRedisCacheDto);
+                  });
+
+
             if (!await gatewayService.SearchPermission(servicePermissions, getAllAuthUser.Permissions))
             {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
