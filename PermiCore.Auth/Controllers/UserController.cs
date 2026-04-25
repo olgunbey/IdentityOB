@@ -22,7 +22,6 @@ namespace PermiCore.Auth.Controllers
 
             AuthRedisUserDto authRedisUserDto = new AuthRedisUserDto();
             authRedisUserDto.UserId = getUser.Id;
-            authRedisUserDto.UserKey = Guid.NewGuid().ToString();
             authRedisUserDto.Permissions = getUser.UserPermissions.Select(y => y.Permission).SelectMany(x => x.UserPermissions).Select(x => x.Permission.Permission).ToList();
 
 
@@ -31,11 +30,16 @@ namespace PermiCore.Auth.Controllers
                  factory: async (ct) => authRedisUserDto,
                  options: new HybridCacheEntryOptions
                  {
-                     Expiration=TimeSpan.FromDays(10)
+                     Expiration = TimeSpan.FromDays(10)
                  }
                  );
 
             return Ok(cacheAuthUser.UserKey);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SignUp(SignUpRequestDto signUpRequestDto)
+        {
+            return Ok();
         }
     }
 }
