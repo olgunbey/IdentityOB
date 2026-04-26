@@ -31,6 +31,13 @@ namespace PermiCore.Auth.Controllers
                      LocalCacheExpiration = TimeSpan.FromMinutes(10)
                  });
 
+            Response.Cookies.Append("UserKey", getUser.Id.ToString(), new CookieOptions()
+            {
+                HttpOnly = true,
+                Secure = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(1),
+                SameSite = SameSiteMode.Strict
+            });
             return Ok(getUser.Id);
         }
         [HttpPost]

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Primitives;
 using Yarp.ReverseProxy.Transforms;
 using YarpExample.Gateway.Database;
 using YarpExample.Gateway.Dtos;
@@ -13,8 +12,9 @@ namespace YarpExample.Gateway.RequestTransforms
         public override async ValueTask ApplyAsync(RequestTransformContext context)
         {
             var httpContext = context.HttpContext;
-            httpContext.Request.Headers.TryGetValue("X-User-Id", out StringValues val);
-            if (!int.TryParse(val.ToString(), out int userId))
+            var test = httpContext.Response.Cookies;
+            var userKey = httpContext.Request.Cookies["UserKey"];
+            if (!int.TryParse(userKey, out int userId))
             {
                 httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
