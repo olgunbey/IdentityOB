@@ -13,13 +13,9 @@ namespace PermiCore.Auth.Service
                    .ThenInclude(y => y.Permission)
                    .FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
         }
-        public async Task<Users?> LoginAsync(string email, string password)
+        public async Task LoginAsync(int userID, string permissionJson, Guid authUserKey)
         {
-            return await authDbContext.Users.FirstOrDefaultAsync(y => y.Email == email && y.Password == password);
-        }
-        public async Task SaveOutbox(Outbox outbox)
-        {
-            authDbContext.Outbox.Add(outbox);
+            authDbContext.LoginUser.Add(new LoginUser() { UserId = userID, PermissionJson = permissionJson, AuthUserKey = authUserKey });
             await authDbContext.SaveChangesAsync();
         }
     }
