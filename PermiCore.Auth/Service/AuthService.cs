@@ -17,5 +17,10 @@ namespace PermiCore.Auth.Service
         {
             return await authDbContext.Users.FirstOrDefaultAsync(y => y.Email == email && y.Password == password);
         }
+        public async Task SaveOutbox(Outbox outbox)
+        {
+            authDbContext.Outbox.Add(outbox);
+            await authDbContext.SaveChangesAsync();
+        }
     }
 }
