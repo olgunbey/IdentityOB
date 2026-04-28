@@ -8,9 +8,9 @@ namespace YarpExample.Gateway.Service
 {
     public class GatewayService(GatewayDbContext gatewayDbContext)
     {
-        public async Task<bool> SearchPermission(ServicePermissionRedisResponseDto servicePermissions, List<string> userPermissionsName)
+        public async Task<bool> SearchPermission(List<string> servicePermissions, List<string> userPermissionsName)
         {
-            if (servicePermissions == null || !servicePermissions.Permissions.Any())
+            if (servicePermissions == null || !servicePermissions.Any())
                 return true;
 
             if (userPermissionsName == null || !userPermissionsName.Any())
@@ -24,34 +24,15 @@ namespace YarpExample.Gateway.Service
                                 .Contains(y.PermissionId.Value));
 
             if (!childUserPerm.Any())
-                return servicePermissions.Permissions.IntersectBy(userPermissionsName, sp => sp).Any();
+                return servicePermissions.IntersectBy(userPermissionsName, sp => sp).Any();
 
-            if (servicePermissions.Permissions.IntersectBy(userPermissionsName, sp => sp).Any())
+            if (servicePermissions.IntersectBy(userPermissionsName, sp => sp).Any())
                 return true;
 
             if (await SearchPermission(servicePermissions, childUserPerm.Select(y => y.Permission).ToList()))
                 return true;
 
             return false;
-        }
-
-        public async Task AddServicePermissionOutbox(AddServicePermissionRequestDto addServicePermissionRequestDto)
-        {
-
-            var outboxes = addServicePermissionRequestDto.PermissionsId.Select(y => new Outbox()
-            {
-                WriteDateTime = DateTime.UtcNow,
-                IdempotencyId = Guid.NewGuid(),
-                InboxOutboxType = new ServicesPermissions().GetType().Name,
-                Payload = JsonSerializer.Serialize(new ServicesPermissions() { PermissionId = y, ServiceId = addServicePermissionRequestDto.RequestPathId }, new JsonSerializerOptions()
-                {
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                })
-            });
-
-            gatewayDbContext.Outbox.AddRange(outboxes);
-
-            await gatewayDbContext.SaveChangesAsync();
         }
     }
 }

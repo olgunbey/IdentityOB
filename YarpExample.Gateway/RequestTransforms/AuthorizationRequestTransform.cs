@@ -52,26 +52,17 @@ namespace YarpExample.Gateway.RequestTransforms
             }
             var path = httpContext.Request.Path.ToString().ToLower();
 
-            var requestService = await gatewayDbContext.Services.SingleAsync(x => x.RequestPath == path);
 
-            var servicePermissions = await hybridCache.GetOrCreateAsync<ServicePermissionRedisResponseDto>(
-                  key: $"service-permissions:{requestService.Id}",
-                  factory: (ct) =>
-                  {
-                      var servicePermissions = gatewayDbContext.ServicesPermissions.
-                          AsNoTrackingWithIdentityResolution().
-                          Include(y => y.Service).
-                          Include(y => y.Permission).
-                          Where(x => x.Service.RequestPath == path).AsEnumerable();
-                      var servicePermissionRedisCacheDto = new ServicePermissionRedisResponseDto()
-                      {
-                          Permissions = servicePermissions.Select(y => y.Permission.Permission).ToList(),
-                      };
-                      return ValueTask.FromResult(servicePermissionRedisCacheDto);
-                  });
+            var servicePermissions = await gatewayDbContext.Services
+                .Include(y => y.ServicesPermissions)
+                .ThenInclude(y => y.Permission)
+                .FirstOrDefaultAsync(y => y.RequestPath == path);
 
+            if (servicePermissions == null) return;
 
-            if (!await gatewayService.SearchPermission(servicePermissions, getAllAuthUser.Permissions))
+            var permissions = servicePermissions.ServicesPermissions.Select(y => y.Permission.Permission).ToList();
+
+            if (!await gatewayService.SearchPermission(permissions, getAllAuthUser.Permissions))
             {
                 httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;

@@ -41,12 +41,6 @@ using (var scope = app.Services.CreateScope())
 {
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
 
-    recurringJobManager.AddOrUpdate<ProcessInboxJob>(
-        "myrecurringJob",
-        y => y.Execute(),
-        "* * * * *"
-    );
-
 }
 if (app.Environment.IsDevelopment())
 {
