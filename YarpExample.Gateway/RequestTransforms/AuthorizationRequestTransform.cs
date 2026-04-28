@@ -7,7 +7,7 @@ using YarpExample.Gateway.Service;
 
 namespace YarpExample.Gateway.RequestTransforms
 {
-    public class AuthorizationRequestTransform(HybridCache hybridCache, GatewayDbContext gatewayDbContext, GatewayService gatewayService) : RequestTransform
+    public class AuthorizationRequestTransform(HybridCache hybridCache, GatewayDbContext gatewayDbContext, GatewayService gatewayService, HttpClient httpClient) : RequestTransform
     {
         public override async ValueTask ApplyAsync(RequestTransformContext context)
         {
@@ -22,7 +22,28 @@ namespace YarpExample.Gateway.RequestTransforms
 
             var getAllAuthUser = await hybridCache.GetOrCreateAsync<AuthRedisResponseDto?>(
                 key: $"AuthServer:{userId}",
-                factory: async (ct) => null);
+                factory: async (ct) =>
+                {
+                    var allUser = await httpClient.GetFromJsonAsync<List<AuthRedisResponseDto?>>($"/login/Getuserinformation");
+
+                    if (allUser == null) return null;
+
+                    var validUsers = allUser
+                        .Where(x => x != null)
+                        .Select(x => x!)
+                        .ToList();
+
+                    var cacheTasks = validUsers
+                      .Select(user => hybridCache.SetAsync(
+                          key: $"AuthServer:{user.UserId}",
+                          value: user,
+                          cancellationToken: ct).AsTask());
+
+                    await Task.WhenAll(cacheTasks);
+
+                    return allUser.SingleOrDefault(x => x.UserId == userId);
+
+                });
 
             if (getAllAuthUser == null) //Ya kullanıcı ok ya da lifetime süresi doldu. 
             {
