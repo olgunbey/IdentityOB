@@ -1,4 +1,4 @@
-﻿namespace YarpExample.Gateway.Dtos
+﻿namespace YarpExample.Gateway.Dtos.Request
 {
     public class AddServicePermissionRequestDto
     {

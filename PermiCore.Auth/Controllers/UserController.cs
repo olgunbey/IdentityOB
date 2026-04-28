@@ -43,5 +43,12 @@ namespace PermiCore.Auth.Controllers
             await hybridCache.RemoveAsync(key: $"AuthServer:{userId}");
             return NoContent();
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllUserPermissions()
+        {
+            var response = await authService.GetAllUserPermissions();
+            return Ok(response);
+        }
     }
 }

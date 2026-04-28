@@ -14,6 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddHangfireServer();
+
 builder.Services.AddScoped<GatewayService>();
 builder.Services.AddStackExchangeRedisCache(action =>
 {
@@ -29,7 +30,9 @@ builder.Services.AddReverseProxy()
         var hybridCache = scope.ServiceProvider.GetRequiredService<HybridCache>();
         var gatewayDbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
         var gatewayService = scope.ServiceProvider.GetRequiredService<GatewayService>();
-        context.RequestTransforms.Add(new AuthorizationRequestTransform(hybridCache, gatewayDbContext, gatewayService));
+        var httpClient = scope.ServiceProvider.GetService<HttpClient>();
+        httpClient.BaseAddress = new Uri("http://localhost:5127");
+        context.RequestTransforms.Add(new AuthorizationRequestTransform(hybridCache, gatewayDbContext, gatewayService, httpClient));
     });
 
 var app = builder.Build();

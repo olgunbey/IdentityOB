@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PermiCore.Auth.Database;
+using PermiCore.Auth.Dtos.Response;
 using PermiCore.Auth.Entity;
 
 namespace PermiCore.Auth.Service
@@ -17,6 +18,18 @@ namespace PermiCore.Auth.Service
         {
             authDbContext.LoginUser.Add(new LoginUser() { UserId = userID, PermissionJson = permissionJson, AuthUserKey = authUserKey });
             await authDbContext.SaveChangesAsync();
+        }
+        public async Task<List<GetAllUserPermissionResponseDto>> GetAllUserPermissions()
+        {
+            return await authDbContext.Users.AsNoTrackingWithIdentityResolution()
+                 .Include(y => y.UserPermissions)
+                 .ThenInclude(y => y.Permission)
+                 .Select(y=> new GetAllUserPermissionResponseDto()
+                 {
+                     UserId=y.Id,
+                     Permissions = y.UserPermissions.Select(y=>y.Permission.Permission).ToList()
+                 })
+                 .ToListAsync();
         }
     }
 }

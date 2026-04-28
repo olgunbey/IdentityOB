@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Yarp.ReverseProxy.Transforms;
 using YarpExample.Gateway.Database;
-using YarpExample.Gateway.Dtos;
+using YarpExample.Gateway.Dtos.Response;
 using YarpExample.Gateway.Service;
 
 namespace YarpExample.Gateway.RequestTransforms
@@ -24,7 +24,7 @@ namespace YarpExample.Gateway.RequestTransforms
                 key: $"AuthServer:{userId}",
                 factory: async (ct) =>
                 {
-                    var allUser = await httpClient.GetFromJsonAsync<List<AuthRedisResponseDto?>>($"/login/Getuserinformation");
+                    var allUser = await httpClient.GetFromJsonAsync<List<AuthRedisResponseDto?>>($"/user/GetAllUserPermissions");
 
                     if (allUser == null) return null;
 
@@ -54,7 +54,7 @@ namespace YarpExample.Gateway.RequestTransforms
 
             var requestService = await gatewayDbContext.Services.SingleAsync(x => x.RequestPath == path);
 
-            var servicePermissions = await hybridCache.GetOrCreateAsync<ServicePermissionRedisCacheDto>(
+            var servicePermissions = await hybridCache.GetOrCreateAsync<ServicePermissionRedisResponseDto>(
                   key: $"service-permissions:{requestService.Id}",
                   factory: (ct) =>
                   {
@@ -63,7 +63,7 @@ namespace YarpExample.Gateway.RequestTransforms
                           Include(y => y.Service).
                           Include(y => y.Permission).
                           Where(x => x.Service.RequestPath == path).AsEnumerable();
-                      var servicePermissionRedisCacheDto = new ServicePermissionRedisCacheDto()
+                      var servicePermissionRedisCacheDto = new ServicePermissionRedisResponseDto()
                       {
                           Permissions = servicePermissions.Select(y => y.Permission.Permission).ToList(),
                       };

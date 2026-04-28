@@ -1,14 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using YarpExample.Gateway.Database;
-using YarpExample.Gateway.Dtos;
+using YarpExample.Gateway.Dtos.Response;
 using YarpExample.Gateway.Entity;
 
 namespace YarpExample.Gateway.Service
 {
     public class GatewayService(GatewayDbContext gatewayDbContext)
     {
-        public async Task<bool> SearchPermission(ServicePermissionRedisCacheDto servicePermissions, List<string> userPermissionsName)
+        public async Task<bool> SearchPermission(ServicePermissionRedisResponseDto servicePermissions, List<string> userPermissionsName)
         {
             if (servicePermissions == null || !servicePermissions.Permissions.Any())
                 return true;
